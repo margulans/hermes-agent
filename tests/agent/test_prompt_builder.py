@@ -306,6 +306,24 @@ class TestBuildSkillsSystemPrompt:
 
 
 
+    def test_skill_loading_guidance_requires_procedural_relevance(self, monkeypatch, tmp_path):
+        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+        skill_dir = tmp_path / "skills" / "tools" / "focused-skill"
+        skill_dir.mkdir(parents=True)
+        (skill_dir / "SKILL.md").write_text(
+            "---\nname: focused-skill\ndescription: Focused workflow\n---\n"
+        )
+
+        result = build_skills_system_prompt()
+
+        assert "Load a skill only when" in result
+        assert "substantially change how you execute" in result
+        assert "Keyword overlap alone is not sufficient" in result
+        assert "direct action is enough" in result
+        assert "substantial-impact threshold is not met" in result
+        assert "partially relevant" not in result
+        assert "Err on the side of loading" not in result
+
     def test_deduplicates_skills(self, monkeypatch, tmp_path):
         monkeypatch.setenv("HERMES_HOME", str(tmp_path))
         cat_dir = tmp_path / "skills" / "tools"
